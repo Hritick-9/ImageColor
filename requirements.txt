@@ -1,6 +1,6 @@
 flask
 numpy
-
+pillow
 
 joblib
 tensorflow
