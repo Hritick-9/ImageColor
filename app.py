@@ -22,9 +22,14 @@ def generator_loss(fake_output, real_output):
     return mse(fake_output, real_output)
 
 # Load the model ONCE at startup
-model = joblib.load("model.pkl")
+try:
+    model = joblib.load("model.pkl")
+    print("✅ Model loaded successfully.")
+except Exception as e:
+    print("❌ Error loading model:", e)
+    model = None
 
-IMG_SIZE = 128  # Based on your notebook
+IMG_SIZE = 128  # Based on your model input
 
 # Preprocess input grayscale image
 def preprocess_image(image_bytes):
@@ -40,8 +45,17 @@ def postprocess_image(output_array):
     output_image = Image.fromarray((output_array * 255).astype(np.uint8))
     return output_image
 
+# Health check route
+@app.route('/')
+def health_check():
+    return "✅ Server is running", 200
+
+# Prediction route
 @app.route('/predict', methods=['POST'])
 def predict():
+    if model is None:
+        return jsonify({'error': 'Model not loaded properly'}), 500
+
     if 'image' not in request.files:
         return jsonify({'error': 'No image provided'}), 400
 
@@ -50,8 +64,10 @@ def predict():
 
     input_array = preprocess_image(image_bytes)
 
-    # Predict once with preloaded model
-    output_array = model.predict(input_array)
+    try:
+        output_array = model.predict(input_array)
+    except Exception as e:
+        return jsonify({'error': f'Prediction failed: {str(e)}'}), 500
 
     output_image = postprocess_image(output_array)
 
@@ -61,6 +77,7 @@ def predict():
 
     return send_file(img_io, mimetype='image/png')
 
+# Run app on dynamic port for Render
 if __name__ == '__main__':
-    # Do NOT use debug=True in production (Render)
-    app.run(host='0.0.0.0', port=10000)
+    port = int(os.environ.get('PORT', 10000))  # 10000 for local fallback
+    app.run(host='0.0.0.0', port=port)
