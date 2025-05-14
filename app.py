@@ -1,22 +1,27 @@
+import os
+# Suppress TensorFlow warnings and logs
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # 0 = all logs, 1 = INFO, 2 = WARNING, 3 = ERROR
+
 from flask import Flask, request, send_file, jsonify
 import numpy as np
 from PIL import Image
 import io
-import joblib  # Use joblib for loading the .pkl model
+import joblib
 import tensorflow as tf
 from keras.models import load_model
 from keras.saving import register_keras_serializable
 
 app = Flask(__name__)
+
+# Define custom loss function
 mse = tf.keras.losses.MeanSquaredError()
 
-# Register the custom loss function for Keras to recognize it during deserialization
 @register_keras_serializable()
 def generator_loss(fake_output, real_output):
     real_output = tf.cast(real_output, 'float32')
     return mse(fake_output, real_output)
 
-# Load the model from .pkl file using joblib
+# Load the model ONCE at startup
 model = joblib.load("model.pkl")
 
 IMG_SIZE = 128  # Based on your notebook
@@ -44,8 +49,8 @@ def predict():
     image_bytes = image_file.read()
 
     input_array = preprocess_image(image_bytes)
-    
-    # Use the loaded model to make predictions
+
+    # Predict once with preloaded model
     output_array = model.predict(input_array)
 
     output_image = postprocess_image(output_array)
@@ -57,4 +62,5 @@ def predict():
     return send_file(img_io, mimetype='image/png')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Do NOT use debug=True in production (Render)
+    app.run(host='0.0.0.0', port=10000)
