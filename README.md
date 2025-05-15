@@ -88,7 +88,7 @@ The Android application provides a user-friendly interface to interact with the 
 - Android 5.0 (API level 21) or higher
 - Internet permission
 - Storage permission
-link :-https://drive.google.com/drive/folders/1_cJPe52_3qidQBxI4CYKpU6CL-s6705q
+- App Link :-https://drive.google.com/drive/folders/1_cJPe52_3qidQBxI4CYKpU6CL-s6705q
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
